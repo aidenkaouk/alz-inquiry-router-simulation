@@ -118,38 +118,40 @@ function renderActions(c) {
   detailEl.appendChild(el("h3", "", "Decision"));
   if (c.status === "approved") {
     var done = el("div", "decision");
-    done.appendChild(el("strong", "", "Approved ("+ c.decision.action + "): "));
+    done.appendChild(el("strong", "", "Approved: "));
     c.decision.teams.forEach(function (t) { done.appendChild(chip(t)); });
+    if (c.decision.changed) {
+      done.appendChild(el("div", "", "Staff changed the router's suggestion (" + c.decision.suggested_teams.join(", ") + ")."));
+    }
     done.appendChild(el("div", "muted", "Recorded only. Nothing was sent anywhere."));
     detailEl.appendChild(done);
     return;
   }
-  var row = el("div", "actions");
-  var approve = el("button", "approve", "Approve");
-  var reroute = el("button", "reroute", "Reroute...");
-  var triage = el("button", "triage-btn", "Send to Triage");
-  row.appendChild(approve); row.appendChild(reroute); row.appendChild(triage);
-  detailEl.appendChild(row);
 
-  var box = el("div", "reroute-box"); box.hidden = true;
+  // Tick or untick teams to change the suggestion, then press Approve.
+  detailEl.appendChild(el("p", "muted", "Teams for this case. Change them if the suggestion is wrong, then approve."));
+  var box = el("div", "reroute-box");
   Object.keys(teamNames).forEach(function (id) {
     var label = el("label");
     var cb = el("input"); cb.type = "checkbox"; cb.value = id;
     cb.checked = c.route.teams.indexOf(id) !== -1;
+    if (id === "HELP" && c.route.needs_human) { cb.checked = true; cb.disabled = true; }  // crisis: HELP is required
     label.appendChild(cb); label.appendChild(document.createTextNode(" " + id + " " + teamNames[id]));
     box.appendChild(label);
   });
-  var apply = el("button", "reroute", "Save new teams");
-  box.appendChild(apply);
   detailEl.appendChild(box);
 
-  approve.addEventListener("click", function () { decide(c.case_id, { action: "approve" }); });
-  triage.addEventListener("click", function () { decide(c.case_id, { action: "triage" }); });
-  reroute.addEventListener("click", function () { box.hidden = !box.hidden; });
-  apply.addEventListener("click", function () {
+  var row = el("div", "actions");
+  var approve = el("button", "approve", "Approve");
+  var triage = el("button", "triage-btn", "Send to Triage");
+  row.appendChild(approve); row.appendChild(triage);
+  detailEl.appendChild(row);
+
+  approve.addEventListener("click", function () {
     var picked = Array.prototype.map.call(box.querySelectorAll("input:checked"), function (i) { return i.value; });
-    decide(c.case_id, { action: "reroute", teams: picked });
+    decide(c.case_id, { action: "approve", teams: picked });
   });
+  triage.addEventListener("click", function () { decide(c.case_id, { action: "triage" }); });
 }
 
 function decide(id, body) {

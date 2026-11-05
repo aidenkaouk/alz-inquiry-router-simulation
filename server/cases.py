@@ -69,6 +69,7 @@ class CaseStore:
         return next((c for c in self._load() if c["case_id"] == case_id), None)
 
     def decide(self, case_id: str, action: str, teams: List[str],
+               suggested: Optional[List[str]] = None,
                staff: str = "demo staff") -> Optional[Dict[str, Any]]:
         """Record a staff decision. Nothing is sent anywhere."""
         with _lock:
@@ -77,12 +78,17 @@ class CaseStore:
             if case is None:
                 return None
             case["status"] = "approved"
-            case["decision"] = {"action": action, "teams": teams}
+            suggested = suggested if suggested is not None else teams
+            changed = sorted(teams) != sorted(suggested)
+            case["decision"] = {"action": action, "teams": teams,
+                                "suggested_teams": suggested, "changed": changed}
             case["audit"].append({
                 "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
                 "staff": staff,
                 "action": action,
                 "teams": teams,
+                "suggested_teams": suggested,
+                "changed": changed,
             })
             self._save(cases)
             return case

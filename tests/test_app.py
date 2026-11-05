@@ -105,23 +105,34 @@ def test_approve_records_decision_and_audit(client):
     assert case["audit"][0]["action"] == "approve"
 
 
-def test_reroute_to_chosen_teams(client):
+def test_approve_with_changed_teams(client):
     case_id = submit(client, "M02")
-    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "reroute", "teams": ["PG", "DON"]})
-    assert r.get_json()["decision"]["teams"] == ["PG", "DON"]
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["PG", "DON"]})
+    d = r.get_json()["decision"]
+    assert d["teams"] == ["PG", "DON"] and d["suggested_teams"] == ["DON"] and d["changed"] is True
 
 
-def test_reroute_rejects_unknown_team_or_empty_list(client):
+def test_approve_without_changes_is_not_marked_changed(client):
+    case_id = submit(client, "M02")
+    d = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["DON"]}).get_json()["decision"]
+    assert d["changed"] is False
+
+
+def test_approve_rejects_unknown_team_or_empty_list(client):
     case_id = submit(client, "M02")
     for teams in (["NOPE"], []):
-        r = client.post(f"/api/cases/{case_id}/decision", json={"action": "reroute", "teams": teams})
+        r = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": teams})
         assert r.status_code == 400
 
 
 def test_crisis_case_cannot_lose_the_helpline(client):
     case_id = submit(client, "M08")
-    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "reroute", "teams": ["DON"]})
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["DON"]})
     assert r.get_json()["decision"]["teams"][0] == "HELP"
+
+
+def test_crisis_case_sent_to_triage_keeps_the_helpline(client):
+    case_id = submit(client, "M08")
     r = client.post(f"/api/cases/{case_id}/decision", json={"action": "triage"})
     assert r.get_json()["decision"]["teams"] == ["HELP", "TRIAGE"]
 
@@ -134,6 +145,6 @@ def test_send_to_triage(client):
 
 def test_bad_action_and_unknown_case(client):
     case_id = submit(client, "M02")
-    assert client.post(f"/api/cases/{case_id}/decision", json={"action": "delete"}).status_code == 400
+    assert client.post(f"/api/cases/{case_id}/decision", json={"action": "reroute"}).status_code == 400
     assert client.get("/api/cases/CASE-9999").status_code == 404
     assert client.post("/api/cases/CASE-9999/decision", json={"action": "approve"}).status_code == 404

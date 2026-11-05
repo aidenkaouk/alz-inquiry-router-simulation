@@ -19,7 +19,7 @@ from server.cases import CaseStore
 ROOT = Path(__file__).resolve().parent.parent
 MAX_COMMENTS = 2500
 REQUIRED = ["first_name", "last_name", "email", "zip", "comments"]
-ACTIONS = ["approve", "reroute", "triage"]
+ACTIONS = ["approve", "triage"]
 
 
 def create_app(store=None, mode=None):
@@ -88,19 +88,21 @@ def create_app(store=None, mode=None):
         if action not in ACTIONS:
             return jsonify({"error": f"action must be one of {ACTIONS}"}), 400
 
-        if action == "approve":
-            teams_ = list(case["route"]["teams"])
-        elif action == "triage":
+        suggested = list(case["route"]["teams"])
+        if action == "triage":
             teams_ = ["TRIAGE"]
-        else:
-            teams_ = list(dict.fromkeys(body.get("teams") or []))
+        elif "teams" in body:
+            # Staff changed the teams before approving.
+            teams_ = list(dict.fromkeys(body["teams"] or []))
             if not teams_ or any(t not in valid_teams for t in teams_):
                 return jsonify({"error": "Pick one or more valid team IDs"}), 400
+        else:
+            teams_ = suggested
 
         # Safety rule in code: a crisis case always includes the Helpline.
         if case["route"]["needs_human"] and "HELP" not in teams_:
             teams_ = ["HELP"] + teams_
-        return jsonify(store.decide(case_id, action, teams_))
+        return jsonify(store.decide(case_id, action, teams_, suggested))
 
     return app
 
