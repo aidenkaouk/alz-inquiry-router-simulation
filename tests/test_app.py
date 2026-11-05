@@ -131,16 +131,50 @@ def test_crisis_case_cannot_lose_the_helpline(client):
     assert r.get_json()["decision"]["teams"][0] == "HELP"
 
 
-def test_crisis_case_sent_to_triage_keeps_the_helpline(client):
-    case_id = submit(client, "M08")
-    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "triage"})
-    assert r.get_json()["decision"]["teams"] == ["HELP", "TRIAGE"]
-
-
-def test_send_to_triage(client):
+def test_triage_is_not_a_team_staff_can_assign(client):
     case_id = submit(client, "M02")
-    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "triage"})
-    assert r.get_json()["decision"]["teams"] == ["TRIAGE"]
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["TRIAGE"]})
+    assert r.status_code == 400
+    assert "TRIAGE" not in [t["team_id"] for t in client.get("/api/teams").get_json()]
+
+
+def test_router_unsure_case_needs_staff_to_pick_teams(client):
+    # M26 is vague: the router says TRIAGE, which in the console means "unsorted".
+    case_id = submit(client, "M26")
+    assert client.get(f"/api/cases/{case_id}").get_json()["route"]["teams"] == ["TRIAGE"]
+    assert client.post(f"/api/cases/{case_id}/decision", json={"action": "approve"}).status_code == 400
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["CHAP"]})
+    d = r.get_json()["decision"]
+    assert d["teams"] == ["CHAP"] and d["changed"] is True
+
+
+def test_followup_keeps_case_open_and_assigns_no_team(client):
+    case_id = submit(client, "M26")
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "followup", "note": "Ask what they need"})
+    case = r.get_json()
+    assert case["status"] == "needs_followup"
+    assert case["decision"]["teams"] == [] and case["decision"]["note"] == "Ask what they need"
+    assert case["decision"]["changed"] is False
+    # It can still be sorted and approved later.
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["DON"]})
+    assert r.get_json()["status"] == "approved"
+
+
+def test_crisis_followup_still_keeps_the_helpline(client):
+    case_id = submit(client, "M08")
+    r = client.post(f"/api/cases/{case_id}/decision", json={"action": "followup"})
+    assert r.get_json()["decision"]["teams"] == ["HELP"]
+
+
+def test_queue_order_crisis_then_open_then_followup_then_approved(client):
+    a = submit(client, "M02")
+    b = submit(client, "M26")
+    c = submit(client, "M03")
+    client.post(f"/api/cases/{b}/decision", json={"action": "followup"})
+    client.post(f"/api/cases/{a}/decision", json={"action": "approve"})
+    crisis = submit(client, "M08")
+    order = [r["case_id"] for r in client.get("/api/cases").get_json()]
+    assert order == [crisis, c, b, a]
 
 
 def test_bad_action_and_unknown_case(client):

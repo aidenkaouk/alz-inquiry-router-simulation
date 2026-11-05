@@ -20,8 +20,10 @@ function api(path, options) {
   });
 }
 function chip(team) {
-  var c = el("span", "chip" + (team === "TRIAGE" ? " triage" : team === "HELP" ? " help" : ""), team);
-  c.title = teamNames[team] || team;
+  // The router's "TRIAGE" just means it could not decide; staff are the triage team.
+  var unsorted = team === "TRIAGE";
+  var c = el("span", "chip" + (unsorted ? " triage" : team === "HELP" ? " help" : ""), unsorted ? "UNSORTED" : team);
+  c.title = unsorted ? "The router could not decide" : (teamNames[team] || team);
   return c;
 }
 
@@ -31,11 +33,11 @@ function loadQueue() {
     queueEl.textContent = "";
     emptyEl.hidden = rows.length > 0;
     rows.forEach(function (r) {
-      var li = el("li", (r.needs_human ? "crisis " : "") + (r.status === "approved" ? "done " : "") +
+      var li = el("li", (r.needs_human ? "crisis " : "") + (r.status === "approved" ? "done " : r.status === "needs_followup" ? "followup " : "") +
                         (r.case_id === selected ? "selected" : ""));
       var top = el("div", "top");
       top.appendChild(el("span", "", r.case_id + (r.needs_human ? "  CRISIS" : "")));
-      top.appendChild(el("span", "", r.status === "approved" ? "Approved" : "Needs review"));
+      top.appendChild(el("span", "", {approved: "Approved", needs_followup: "Follow-up", needs_review: "Needs review"}[r.status]));
       li.appendChild(top);
       li.appendChild(el("div", "", r.name));
       var teams = el("div");
@@ -76,11 +78,14 @@ function renderCase(c) {
   detailEl.appendChild(el("h3", "", "Message"));
   detailEl.appendChild(el("div", "box message", c.comments));
 
-  detailEl.appendChild(el("h3", "", "Suggested teams (staff decide)"));
+  detailEl.appendChild(el("h3", "", "Router suggestion (you decide)"));
   var teams = el("div");
   r.teams.forEach(function (t) { teams.appendChild(chip(t)); });
   detailEl.appendChild(teams);
-  if (r.triage_reasons.length) detailEl.appendChild(el("div", "reasons", "Why TRIAGE or flagged: " + r.triage_reasons.join("; ")));
+  if (r.teams.indexOf("TRIAGE") !== -1) {
+    detailEl.appendChild(el("div", "reasons", "The router could not decide. Please sort this one yourself."));
+  }
+  if (r.triage_reasons.length) detailEl.appendChild(el("div", "reasons", "Why the router was unsure: " + r.triage_reasons.join("; ")));
   r.staff_flags.forEach(function (f) { detailEl.appendChild(el("div", "flag", "Staff flag: " + f)); });
 
   if (r.segments.length) {
@@ -121,20 +126,26 @@ function renderActions(c) {
     done.appendChild(el("strong", "", "Approved: "));
     c.decision.teams.forEach(function (t) { done.appendChild(chip(t)); });
     if (c.decision.changed) {
-      done.appendChild(el("div", "", "Staff changed the router's suggestion (" + c.decision.suggested_teams.join(", ") + ")."));
+      var was = c.decision.suggested_teams.length ? c.decision.suggested_teams.join(", ") : "no suggestion";
+      done.appendChild(el("div", "", "Staff changed the router's suggestion (" + was + ")."));
     }
     done.appendChild(el("div", "muted", "Recorded only. Nothing was sent anywhere."));
     detailEl.appendChild(done);
     return;
   }
+  if (c.status === "needs_followup") {
+    var fu = el("div", "flag", "Follow-up needed: " + (c.decision.note || "(no note)") + "  You can still sort and approve it below.");
+    detailEl.appendChild(fu);
+  }
 
-  // Tick or untick teams to change the suggestion, then press Approve.
+  // Tick or untick teams, then press Approve. You are the triage team, so TRIAGE is not listed.
   detailEl.appendChild(el("p", "muted", "Teams for this case. Change them if the suggestion is wrong, then approve."));
+  var suggested = c.route.teams.filter(function (t) { return t !== "TRIAGE"; });
   var box = el("div", "reroute-box");
   Object.keys(teamNames).forEach(function (id) {
     var label = el("label");
     var cb = el("input"); cb.type = "checkbox"; cb.value = id;
-    cb.checked = c.route.teams.indexOf(id) !== -1;
+    cb.checked = suggested.indexOf(id) !== -1;
     if (id === "HELP" && c.route.needs_human) { cb.checked = true; cb.disabled = true; }  // crisis: HELP is required
     label.appendChild(cb); label.appendChild(document.createTextNode(" " + id + " " + teamNames[id]));
     box.appendChild(label);
@@ -143,22 +154,28 @@ function renderActions(c) {
 
   var row = el("div", "actions");
   var approve = el("button", "approve", "Approve");
-  var triage = el("button", "triage-btn", "Send to Triage");
-  row.appendChild(approve); row.appendChild(triage);
+  row.appendChild(approve);
   detailEl.appendChild(row);
+
+  var note = el("input", "note"); note.type = "text"; note.maxLength = 300;
+  note.placeholder = "Optional note: what do you need to find out?";
+  var followup = el("button", "triage-btn", "Can't sort this: needs follow-up");
+  var fuRow = el("div", "actions");
+  fuRow.appendChild(note); fuRow.appendChild(followup);
+  detailEl.appendChild(fuRow);
 
   approve.addEventListener("click", function () {
     var picked = Array.prototype.map.call(box.querySelectorAll("input:checked"), function (i) { return i.value; });
     decide(c.case_id, { action: "approve", teams: picked });
   });
-  triage.addEventListener("click", function () { decide(c.case_id, { action: "triage" }); });
+  followup.addEventListener("click", function () { decide(c.case_id, { action: "followup", note: note.value }); });
 }
 
 function decide(id, body) {
   api("/api/cases/" + id + "/decision", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
   }).then(function (c) { renderCase(c); loadQueue(); })
-    .catch(function () { alert("Could not save. Pick at least one valid team."); });
+    .catch(function () { alert("Could not save. Pick at least one team."); });
 }
 
 // ---- Start ----
