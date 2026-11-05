@@ -52,7 +52,7 @@ class CaseStore:
             "submitter": {k: form.get(k, "") for k in SUBMITTER_FIELDS},
             "comments": form.get("comments", ""),
             "route": route_result,
-            "status": "needs_review",       # needs_review | needs_followup | approved
+            "status": "needs_review",       # needs_review -> approved
             "decision": None,               # filled in when staff act
             "audit": [],
         }
@@ -70,7 +70,6 @@ class CaseStore:
 
     def decide(self, case_id: str, action: str, teams: List[str],
                suggested: Optional[List[str]] = None,
-               status: str = "approved", note: str = "",
                staff: str = "demo staff") -> Optional[Dict[str, Any]]:
         """Record a staff decision. Nothing is sent anywhere."""
         with _lock:
@@ -78,12 +77,11 @@ class CaseStore:
             case = next((c for c in cases if c["case_id"] == case_id), None)
             if case is None:
                 return None
-            case["status"] = status
+            case["status"] = "approved"
             suggested = suggested if suggested is not None else teams
             changed = action == "approve" and sorted(teams) != sorted(suggested)
             case["decision"] = {"action": action, "teams": teams,
-                                "suggested_teams": suggested, "changed": changed,
-                                "note": note}
+                                "suggested_teams": suggested, "changed": changed}
             case["audit"].append({
                 "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
                 "staff": staff,
@@ -91,7 +89,6 @@ class CaseStore:
                 "teams": teams,
                 "suggested_teams": suggested,
                 "changed": changed,
-                "note": note,
             })
             self._save(cases)
             return case

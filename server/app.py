@@ -19,7 +19,7 @@ from server.cases import CaseStore
 ROOT = Path(__file__).resolve().parent.parent
 MAX_COMMENTS = 2500
 REQUIRED = ["first_name", "last_name", "email", "zip", "comments"]
-ACTIONS = ["approve", "followup"]
+ACTIONS = ["approve"]
 # The person at the console IS the Constituent Triage team (see PLAN.md), so cases
 # are never assigned to TRIAGE by staff. Invented person from data/contacts.csv.
 STAFF = "Beatrice Lowell (Constituent Triage, demo)"
@@ -72,7 +72,7 @@ def create_app(store=None, mode=None):
             "preview": c["comments"][:90],
             "name": f'{c["submitter"]["first_name"]} {c["submitter"]["last_name"]}'.strip(),
         } for c in store.list()]
-        order = {"needs_review": 0, "needs_followup": 1, "approved": 2}
+        order = {"needs_review": 0, "approved": 1}
         rows.sort(key=lambda r: (not r["needs_human"], order[r["status"]], r["created"]))
         return jsonify(rows)
 
@@ -96,14 +96,6 @@ def create_app(store=None, mode=None):
         needs_human = case["route"]["needs_human"]
         # "TRIAGE" in the router's answer just means "router could not decide".
         suggested = [t for t in case["route"]["teams"] if t != "TRIAGE"]
-
-        if action == "followup":
-            # Staff cannot sort this yet (e.g. must ask the person what they mean).
-            # The case stays open; no team is assigned. A crisis keeps the Helpline.
-            teams_ = ["HELP"] if needs_human else []
-            note = str(body.get("note") or "")[:300]
-            return jsonify(store.decide(case_id, "followup", teams_, suggested,
-                                        status="needs_followup", note=note, staff=STAFF))
 
         teams_ = list(dict.fromkeys(body["teams"] if "teams" in body else suggested))
         if not teams_ or any(t not in valid_teams for t in teams_):
