@@ -165,6 +165,19 @@ class RouteResult:
 
 # --- Our rules, applied after Claude answers -----------------------------
 
+UNCLEAR_PART_FLAG = "Part of this message was unclear; please read the full text"
+
+
+def triage_is_side_note(segments: List[Dict[str, Any]]) -> bool:
+    """True when Claude marked part of the message TRIAGE but also found at least
+    one specialist team it is confident about."""
+    has_triage = any(s["team"] == "TRIAGE" for s in segments)
+    confident_specialist = any(
+        s["team"] != "TRIAGE" and s["confidence"] >= CONFIDENCE_THRESHOLD for s in segments
+    )
+    return has_triage and confident_specialist
+
+
 def apply_rules(claude: Optional[Dict[str, Any]], keyword_hits: List[str]):
     """Turn Claude's labels into a final suggestion using plain-code rules.
 
@@ -183,15 +196,23 @@ def apply_rules(claude: Optional[Dict[str, Any]], keyword_hits: List[str]):
                 teams.append(seg["team"])
         claude_crisis = bool(claude.get("crisis"))
 
+        # A TRIAGE segment next to a confident specialist team is a side note
+        # (e.g. a prompt-injection sentence), not a reason to send the whole case
+        # to TRIAGE. route() adds a staff flag so a person still sees it.
+        side_note = triage_is_side_note(segments)
+        checked = [s for s in segments if s["team"] != "TRIAGE"] if side_note else segments
+
         if not segments:
             reasons.append("No segments returned")
-        if "TRIAGE" in teams:
+        if "TRIAGE" in teams and not side_note:
             reasons.append("Claude could not tell what is needed")
         specialist = [t for t in teams if t != "TRIAGE"]
         if len(specialist) > MAX_TEAMS:
             reasons.append(f"Touches {len(specialist)} teams (more than {MAX_TEAMS})")
-        low = [s for s in segments if s["confidence"] < CONFIDENCE_THRESHOLD]
-        if low or claude.get("overall_confidence", 0) < CONFIDENCE_THRESHOLD:
+        low = [s for s in checked if s["confidence"] < CONFIDENCE_THRESHOLD]
+        overall_low = (not side_note
+                       and claude.get("overall_confidence", 0) < CONFIDENCE_THRESHOLD)
+        if low or overall_low:
             reasons.append(f"Low confidence (below {CONFIDENCE_THRESHOLD})")
         teams = specialist
 
@@ -348,6 +369,10 @@ def route(case_id: str, comments: str, submitter: Dict[str, str],
 
     teams, needs_human, reasons = apply_rules(labels, keyword_hits)  # 5.
 
+    staff_flags = list((labels or {}).get("staff_flags", []))
+    if labels and triage_is_side_note(labels.get("segments") or []) and teams != ["TRIAGE"]:
+        staff_flags.append(UNCLEAR_PART_FLAG)
+
     return RouteResult(
         case_id=case_id,
         teams=teams,
@@ -358,7 +383,7 @@ def route(case_id: str, comments: str, submitter: Dict[str, str],
         segments=(labels or {}).get("segments", []),
         overall_confidence=(labels or {}).get("overall_confidence"),
         handoff_note=(labels or {}).get("handoff_note", ""),
-        staff_flags=(labels or {}).get("staff_flags", []),
+        staff_flags=staff_flags,
         source=source,
         what_claude_saw=user_message,
         redacted_counts=red.removed,

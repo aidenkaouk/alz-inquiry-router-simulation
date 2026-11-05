@@ -2,7 +2,7 @@ overlap_id,message_pattern,competing_teams,tie_break_rule,escalation
 O01,"I walked last year and want to volunteer at the Walk",WALK|VOL,"WALK wins: any volunteering tied to a specific event belongs to WALK","If no event is named, send to VOL"
 O02,"I made a donation at / through a Walk page",WALK|DON,"WALK owns donations made through an event page; DON owns receipt or payment problems for them","If it is about a receipt only, add DON as a second team"
 O03,"In memory of a loved one I want to give",DON|PG,"DON for ordinary memorial or tribute gifts; PG only if a will, estate or bequest is mentioned","Unclear amount or method: DON, with PG visible"
-O04,"My company wants to sponsor or give",CORP|DON,"CORP for company sponsorship or matching; DON for an individual's gift","If both an employee gift and company program appear, route to both"
+O04,"My company wants to sponsor or give",CORP|DON,"CORP for company sponsorship or matching; DON for an individual's gift","A company program alone (sponsorship or matching) stays CORP. Add DON only if the sender also describes their own personal gift"
 O05,"Outreach for a specific community or language",DEI|CHAP,"DEI for community-wide outreach and language resources; CHAP for a local class or support group","If a ZIP is given and a local program is asked for, CHAP"
 O06,"Board member or official asking about public health or policy",ADV|PRO,"ADV for legislation and public policy; PRO for clinical or health-system questions","Both topics present: route to both as equals"
 O07,"A reporter asking for a statistic or interview",MEDIA|RES,"MEDIA owns all press contact; RES is added only if a specific study is named","Deadline mentioned: flag urgent in handoff note"
