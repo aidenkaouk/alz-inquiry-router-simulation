@@ -14,7 +14,8 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, request
 
 from server import router
-from server.cases import CaseStore
+from server.cases import STATUSES, CaseStore, is_closed
+from server.outbox import build_emails
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_COMMENTS = 2500
@@ -23,6 +24,7 @@ ACTIONS = ["approve"]
 # The person at the console IS the Constituent Triage team (see PLAN.md), so cases
 # are never assigned to TRIAGE by staff. Invented person from data/contacts.csv.
 STAFF = "Beatrice Lowell (Constituent Triage, demo)"
+MAX_NOTE = 500
 
 
 def create_app(store=None, mode=None):
@@ -31,7 +33,8 @@ def create_app(store=None, mode=None):
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0   # browsers always fetch the latest page files
     store = store or CaseStore()
     mode = mode or os.environ.get("ROUTER_MODE", "auto")
-    valid_teams = {t["team_id"] for t in router.load_teams()} - {"TRIAGE"}
+    all_teams = {t["team_id"] for t in router.load_teams()}
+    valid_teams = all_teams - {"TRIAGE"}          # teams staff can assign a case to
 
     @app.get("/")
     def home():
@@ -82,13 +85,15 @@ def create_app(store=None, mode=None):
         case = store.get(case_id)
         if case is None:
             abort(404)
-        return jsonify(case)
+        return jsonify(dict(case, closed=is_closed(case)))
 
     @app.post("/api/cases/<case_id>/decision")
     def decide(case_id):
         case = store.get(case_id)
         if case is None:
             abort(404)
+        if case["status"] == "approved":
+            return jsonify({"error": "This case was already approved"}), 409
         body = request.get_json(silent=True) or {}
         action = body.get("action")
         if action not in ACTIONS:
@@ -105,6 +110,70 @@ def create_app(store=None, mode=None):
         if needs_human and "HELP" not in teams_:
             teams_ = ["HELP"] + teams_
         return jsonify(store.decide(case_id, "approve", teams_, suggested, staff=STAFF))
+
+
+    # ---- Team inbox: each team works on its own part of a shared case ----
+
+    @app.get("/api/teams/<team_id>/cases")
+    def team_cases(team_id):
+        if team_id not in all_teams:
+            abort(404)
+        rows = []
+        for c in store.list():
+            if c["status"] != "approved":
+                continue
+            ts = c["team_status"]
+            if team_id != "TRIAGE" and team_id not in ts:
+                continue                      # Triage watches every case; teams see only theirs
+            rows.append({
+                "case_id": c["case_id"], "created": c["created"],
+                "name": f'{c["submitter"]["first_name"]} {c["submitter"]["last_name"]}'.strip(),
+                "preview": c["comments"][:90], "needs_human": c["route"]["needs_human"],
+                "closed": is_closed(c),
+                "my_status": ts.get(team_id, {}).get("status"),
+                "teams": {t: v["status"] for t, v in ts.items()},
+            })
+        rows.sort(key=lambda r: (r["closed"], not r["needs_human"], r["my_status"] != "pending", r["created"]))
+        return jsonify(rows)
+
+    @app.post("/api/cases/<case_id>/teams/<team_id>/status")
+    def set_status(case_id, team_id):
+        case = store.get(case_id)
+        if case is None or case["status"] != "approved" or team_id not in case["team_status"]:
+            abort(404)
+        body = request.get_json(silent=True) or {}
+        # A team can only change ITS OWN status. (No logins in the demo: the inbox
+        # says who it is viewing as, and the server checks it matches.)
+        if body.get("as_team") != team_id:
+            return jsonify({"error": "A team can only change its own status"}), 403
+        if body.get("status") not in STATUSES:
+            return jsonify({"error": f"status must be one of {STATUSES}"}), 400
+        updated = store.set_team_status(case_id, team_id, body["status"])
+        return jsonify(dict(updated, closed=is_closed(updated)))
+
+    @app.post("/api/cases/<case_id>/notes")
+    def add_note(case_id):
+        case = store.get(case_id)
+        if case is None or case["status"] != "approved":
+            abort(404)
+        body = request.get_json(silent=True) or {}
+        team = body.get("as_team")
+        text = str(body.get("text") or "").strip()
+        if team != "TRIAGE" and team not in case["team_status"]:
+            return jsonify({"error": "Only teams on this case (or Triage) can add notes"}), 403
+        if not text or len(text) > MAX_NOTE:
+            return jsonify({"error": f"A note must be 1 to {MAX_NOTE} characters"}), 400
+        updated = store.add_note(case_id, team, text)
+        return jsonify(dict(updated, closed=is_closed(updated))), 201
+
+    @app.get("/api/cases/<case_id>/outbox")
+    def outbox(case_id):
+        case = store.get(case_id)
+        if case is None:
+            abort(404)
+        if case["status"] != "approved":
+            return jsonify({"error": "Emails are only built after staff approve a case"}), 409
+        return jsonify(build_emails(case))
 
     return app
 

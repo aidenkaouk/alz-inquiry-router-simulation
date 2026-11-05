@@ -55,3 +55,16 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .zzz { animation: drift 3s ease-in-out infinite; }
 @keyframes drift { 0%, 100% { opacity: 0.35; transform: translateY(4px); } 50% { opacity: 1; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .zzz { animation: none; } }
+
+/* Team inbox */
+.navlink { color: #fff; margin-right: 18px; }
+.bar .who select { padding: 5px; margin-left: 6px; font: inherit; max-width: 260px; }
+.status { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin: 0 8px 4px 2px; }
+.status-pending { background: #fff4c2; color: #6b4e00; border: 1px solid #e5d27a; }
+.status-replied { background: #e6f4f1; color: #1d6a5c; border: 1px solid #1d6a5c; }
+.status-no_reply_needed { background: #eee; color: #555; border: 1px solid #bbb; }
+.teamrow { margin-top: 4px; }
+mark { background: #ffe58a; padding: 1px 2px; }
+tr.me td { background: #f6effa; }
+.note-item { background: #fff; border: 1px solid var(--line); padding: 8px 10px; margin-bottom: 6px; font-size: 13px; white-space: pre-wrap; }
+.note-input { width: 100%; max-width: 560px; display: block; margin: 8px 0; font: inherit; padding: 8px; }
