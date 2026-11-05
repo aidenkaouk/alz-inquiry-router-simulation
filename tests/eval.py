@@ -87,6 +87,7 @@ def main():
                     "crisis": r.claude_crisis,
                     "overall_confidence": r.overall_confidence,
                     "handoff_note": r.handoff_note,
+                    "staff_flags": r.staff_flags,
                 },
             }
 
@@ -115,6 +116,11 @@ def main():
     print("\nBy category:")
     for cat, (ok, tot) in sorted(by_category.items()):
         print(f"   {cat:18} {ok}/{tot}")
+    flagged = [r for r in rows if r["staff_flags"]]
+    if flagged:
+        print("\nStaff flags (shown to staff, do not change teams):")
+        for r in flagged:
+            print(f"   {r['id']}: " + " | ".join(r["staff_flags"]))
     print(f"\nAnswers from: {dict(sources)}")
     print(f"Estimated cost: ${total_cost:.4f}")
 
@@ -128,6 +134,8 @@ def main():
                 print(f"     rule: {reason}")
             for s in r["segments"]:
                 print(f"     {s['team']:6} {s['confidence']:.2f}  {s['reason']}")
+            for flag in r["staff_flags"]:
+                print(f"     flag: {flag}")
 
     # --- Save --------------------------------------------------------------
     if args.save_cache:

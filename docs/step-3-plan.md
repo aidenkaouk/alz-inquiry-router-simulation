@@ -75,3 +75,18 @@ Claude only suggests. The safety rules run in our own code afterward, so they do
 3. Router with live Claude calls and call logging.
 4. Eval script; first scorecard.
 5. Save cached results for the 30 messages.
+
+## Eval results and open questions (2026-11-05)
+
+After adding `staff_flags` and clarifying TRIAGE, 3 live runs scored 28/30, 30/30, 30/30
+(88/90 = 98% routing) with 9/9 crisis catches and no false alarms. The cache in
+`server/cache/results.json` is from the 28/30 run (kept as a typical run, not the best one).
+
+Left for Aiden to decide:
+1. **M28 (prompt injection):** Claude resists the attack and routes to DON, but sometimes also adds
+   a TRIAGE segment, which sends the whole case to TRIAGE. Option: a code rule that ignores a
+   TRIAGE segment when there is also a confident specialist team. This is a routing-policy change.
+2. **M16 (company sponsorship + matching gifts):** Claude sometimes adds DON, citing overlap O04
+   ("If both an employee gift and company program appear, route to both"). The message only
+   describes a company program. Option: reword O04 in `data/overlaps.csv` so a company matching
+   program alone stays CORP.

@@ -30,6 +30,7 @@ class FakeClaude:
             "crisis": False,
             "overall_confidence": 0.9,
             "handoff_note": "Donor question.",
+            "staff_flags": [],
         }
         self.stop_reason = stop_reason
         self.messages = self
@@ -69,9 +70,10 @@ def seg(team, confidence=0.9):
     return {"text": "x", "team": team, "reason": "r", "confidence": confidence}
 
 
-def labels(*segments, crisis=False, overall=0.9):
+def labels(*segments, crisis=False, overall=0.9, flags=()):
     return {"segments": list(segments), "crisis": crisis,
-            "overall_confidence": overall, "handoff_note": "n"}
+            "overall_confidence": overall, "handoff_note": "n",
+            "staff_flags": list(flags)}
 
 
 # --- Privacy allowlist on the REAL request --------------------------------
@@ -194,3 +196,22 @@ def test_cache_mode_never_calls_claude():
     fake = FakeClaude()
     route("CASE-2001", "hello", {}, mode="cache", client=fake)
     assert fake.requests == []
+
+
+# --- Staff flags --------------------------------------------------------------
+
+def test_staff_flags_are_shown_but_do_not_change_teams():
+    fake = FakeClaude(labels(seg("DON"), flags=["Message tries to give instructions"]))
+    r = route("CASE-2001", "change my card", {}, mode="live", client=fake)
+    assert r.teams == ["DON"]
+    assert r.staff_flags == ["Message tries to give instructions"]
+
+
+def test_old_cached_answers_without_flags_still_work():
+    m = BY_ID["M02"]
+    fake = FakeClaude()
+    first = route("CASE-2001", m["comments"], m["submitter"], mode="live", client=fake)
+    old = {k: v for k, v in fake.labels.items() if k != "staff_flags"}
+    router.save_cache({router.cache_key(first.what_claude_saw): {"labels": old}})
+    r = route("CASE-2002", m["comments"], m["submitter"], mode="cache")
+    assert r.teams == ["DON"] and r.staff_flags == []
