@@ -27,6 +27,7 @@ Layout: utility bar (Illinois Chapter, About, News, Events, Professionals, E-New
 - Claude splits the Comments into segments; each gets a team, one-line reason and confidence.
 - Teams on a case are equals. Each sees the full case, the highlighted segments, the other teams and their statuses, and a shared notes thread. Each owns its own segment.
 - Status per team: Pending / Replied / No reply needed. Case closes when all teams are resolved. TRIAGE watches and flags overdue pending teams.
+- Console user = the Constituent Triage team (decided in step 5). Staff never assign a case to TRIAGE; they pick real teams and Approve. The router's "TRIAGE" answer shows in the console as "UNSORTED" (router could not decide). There is no "send to triage" or "can't sort" button: if the router is unsure, staff pick the teams. TRIAGE as a team still watches for overdue teams in step 6.
 - Rules: crisis adds HELP and flags a human; more than 3 teams or low confidence goes to TRIAGE; staff approve and can add/remove teams; nothing is sent automatically.
 
 ## Privacy design

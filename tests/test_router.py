@@ -215,3 +215,36 @@ def test_old_cached_answers_without_flags_still_work():
     router.save_cache({router.cache_key(first.what_claude_saw): {"labels": old}})
     r = route("CASE-2002", m["comments"], m["submitter"], mode="cache")
     assert r.teams == ["DON"] and r.staff_flags == []
+
+
+# --- TRIAGE segment next to a confident specialist team ---------------------
+
+def test_triage_side_note_routes_to_specialist():
+    # M28 shape: a real DON question plus an attack sentence labelled TRIAGE.
+    teams, _, reasons = apply_rules(labels(seg("DON", 0.95), seg("TRIAGE", 0.3), overall=0.5), [])
+    assert teams == ["DON"]
+    assert reasons == []
+
+
+def test_triage_side_note_adds_staff_flag_but_keeps_team():
+    fake = FakeClaude(labels(seg("DON", 0.95), seg("TRIAGE", 0.3), overall=0.5))
+    r = route("CASE-2002", "donate, and also something unclear", {}, mode="live", client=fake)
+    assert r.teams == ["DON"]
+    assert router.UNCLEAR_PART_FLAG in r.staff_flags
+
+
+def test_triage_alone_still_goes_to_triage_without_flag():
+    fake = FakeClaude(labels(seg("TRIAGE", 0.3), overall=0.3))
+    r = route("CASE-2003", "why does this keep happening", {}, mode="live", client=fake)
+    assert r.teams == ["TRIAGE"]
+    assert router.UNCLEAR_PART_FLAG not in r.staff_flags
+
+
+def test_triage_with_unsure_specialist_still_goes_to_triage():
+    teams, _, _ = apply_rules(labels(seg("DON", 0.5), seg("TRIAGE", 0.3), overall=0.4), [])
+    assert teams == ["TRIAGE"]
+
+
+def test_triage_side_note_still_adds_help_on_crisis():
+    teams, needs_human, _ = apply_rules(labels(seg("DON", 0.95), seg("TRIAGE", 0.3)), ["self-harm"])
+    assert teams == ["HELP", "DON"] and needs_human

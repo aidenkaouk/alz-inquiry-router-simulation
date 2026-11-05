@@ -38,15 +38,31 @@ form.addEventListener("submit", function (e) {
   // only the redacted Comments + case ID may ever go on to Claude (see CLAUDE.md privacy rules).
   var data = Object.fromEntries(new FormData(form).entries());
   data.language = window.LANG;
-  sendInquiry(data);
-  form.hidden = true;
-  document.getElementById("sample-box").hidden = true;
-  document.getElementById("thanks").hidden = false;
+  var errorBox = document.getElementById("send-error");
+  errorBox.hidden = true;
+  sendInquiry(data).then(function (caseId) {
+    document.getElementById("case-ref").textContent = caseId;
+    form.hidden = true;
+    document.getElementById("sample-box").hidden = true;
+    document.getElementById("thanks").hidden = false;
+  }).catch(function () {
+    errorBox.textContent = window.STRINGS.sendError;
+    errorBox.hidden = false;
+  });
 });
 
-// Placeholder until the intake server exists (POST /api/inquiries).
-// It deliberately does nothing with the data: no storage, no logging, no network.
-function sendInquiry(data) { /* TODO: fetch("/api/inquiries", { method: "POST", body: JSON.stringify(data) }) */ }
+// Sends the form to the local demo server (server/app.py) and returns the case ID.
+// The server keeps the contact details; only the redacted Comments go on to Claude.
+function sendInquiry(data) {
+  return fetch("/api/inquiries", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  }).then(function (r) {
+    if (!r.ok) throw new Error("send failed");
+    return r.json();
+  }).then(function (body) { return body.case_id; });
+}
 
 document.getElementById("again").addEventListener("click", function () {
   form.reset(); updateCount();
