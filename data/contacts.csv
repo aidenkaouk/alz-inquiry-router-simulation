@@ -1,0 +1,37 @@
+contact_id,team_id,name,role,level,email,coverage,hours
+C001,HELP,Marisol Reyes,Helpline Shift Supervisor,primary,marisol.reyes@alz-demo.example,national,24/7
+C002,HELP,Daniel Okafor,Care Consultant,backup,daniel.okafor@alz-demo.example,national,24/7
+C003,DON,Priya Natarajan,Donor Services Manager,primary,priya.natarajan@alz-demo.example,national,Mon-Fri 8-6 CT
+C004,DON,Tom Bellweather,Donor Services Specialist,backup,tom.bellweather@alz-demo.example,national,Mon-Fri 8-6 CT
+C005,PG,Eleanor Whitfield,Director of Planned Giving,primary,eleanor.whitfield@alz-demo.example,national,Mon-Fri 9-5 CT
+C006,PG,Marcus Lindqvist,Gift Planning Officer,backup,marcus.lindqvist@alz-demo.example,national,Mon-Fri 9-5 CT
+C007,WALK,Jasmine Torres,Walk Program Manager,primary,jasmine.torres@alz-demo.example,national,Mon-Fri 8-5 CT
+C008,WALK,Ben Achterberg,Event Volunteer Coordinator,backup,ben.achterberg@alz-demo.example,national,Mon-Fri 8-5 CT
+C009,VOL,Grace Oyelaran,Volunteer Engagement Manager,primary,grace.oyelaran@alz-demo.example,national,Mon-Fri 9-5 CT
+C010,VOL,Samuel Park,Volunteer Coordinator,backup,samuel.park@alz-demo.example,national,Mon-Fri 9-5 CT
+C011,ADV,Rosalind Hargrove,Advocacy Program Director,primary,rosalind.hargrove@alz-demo.example,national,Mon-Fri 9-5 ET
+C012,ADV,Idris Mbeki,State Policy Associate,backup,idris.mbeki@alz-demo.example,national,Mon-Fri 9-5 ET
+C013,RES,Dr. Helena Voss,Research Engagement Lead,primary,helena.voss@alz-demo.example,national,Mon-Fri 9-5 CT
+C014,RES,Kenji Watanabe,TrialMatch Coordinator,backup,kenji.watanabe@alz-demo.example,national,Mon-Fri 9-5 CT
+C015,PRO,Dr. Annika Solberg,Medical Affairs Liaison,primary,annika.solberg@alz-demo.example,national,Mon-Fri 9-5 CT
+C016,PRO,Carlos Mendoza,Professional Education Manager,backup,carlos.mendoza@alz-demo.example,national,Mon-Fri 9-5 CT
+C017,CHAP,Naomi Feldman,Chapter Operations Director,primary,naomi.feldman@alz-demo.example,national,Mon-Fri 8-5 CT
+C018,CHAP,Wesley Tran,Chapter Operations Associate,backup,wesley.tran@alz-demo.example,national,Mon-Fri 8-5 CT
+C019,CHAP,Lucille Banerjee,Regional Program Manager - Northeast,primary,lucille.banerjee@alz-demo.example,"region: Northeast (ZIP 0-1)",Mon-Fri 8-5 ET
+C020,CHAP,Raymond Castellanos,Regional Program Manager - Southeast,primary,raymond.castellanos@alz-demo.example,"region: Southeast (ZIP 2-3)",Mon-Fri 8-5 ET
+C021,CHAP,Hannah Eriksen,Regional Program Manager - Midwest,primary,hannah.eriksen@alz-demo.example,"region: Midwest (ZIP 4-6)",Mon-Fri 8-5 CT
+C022,CHAP,Tyrone Whitaker,Regional Program Manager - West,primary,tyrone.whitaker@alz-demo.example,"region: South Central and West (ZIP 7-9)",Mon-Fri 8-5 PT
+C023,MEDIA,Vivian Kessler,Communications Director,primary,vivian.kessler@alz-demo.example,national,Mon-Fri 8-6 ET
+C024,MEDIA,Andre Duclos,Media Relations Specialist,backup,andre.duclos@alz-demo.example,national,Mon-Fri 8-6 ET
+C025,WEB,Mei-Ling Chou,Web Operations Manager,primary,meiling.chou@alz-demo.example,national,Mon-Fri 9-5 CT
+C026,WEB,Patrick Oduya,Digital Accessibility Analyst,backup,patrick.oduya@alz-demo.example,national,Mon-Fri 9-5 CT
+C027,PRIV,Judith Abernathy,Privacy Officer,primary,judith.abernathy@alz-demo.example,national,Mon-Fri 9-5 CT
+C028,PRIV,Felix Ramanathan,Legal Counsel,backup,felix.ramanathan@alz-demo.example,national,Mon-Fri 9-5 CT
+C029,CORP,Stephanie Doyle,Corporate Partnerships Director,primary,stephanie.doyle@alz-demo.example,national,Mon-Fri 9-5 CT
+C030,CORP,Omar Haddad,Workplace Giving Manager,backup,omar.haddad@alz-demo.example,national,Mon-Fri 9-5 CT
+C031,JOBS,Colleen Nakamura,Talent Acquisition Manager,primary,colleen.nakamura@alz-demo.example,national,Mon-Fri 8-5 CT
+C032,JOBS,Terrence Pruitt,HR Coordinator,backup,terrence.pruitt@alz-demo.example,national,Mon-Fri 8-5 CT
+C033,DEI,Amara Nwosu,Diverse Communities Program Director,primary,amara.nwosu@alz-demo.example,national,Mon-Fri 9-5 CT
+C034,DEI,Luis Herrera,Community Outreach Coordinator,backup,luis.herrera@alz-demo.example,national,Mon-Fri 9-5 CT
+C035,TRIAGE,Beatrice Lowell,Constituent Triage Lead,lead-of-team,beatrice.lowell@alz-demo.example,national,Mon-Fri 8-6 CT
+C036,TRIAGE,Jonah Katz,Constituent Triage Specialist,backup,jonah.katz@alz-demo.example,national,Mon-Fri 8-6 CT
