@@ -36,7 +36,9 @@ window.STRINGS = {
   demoPicker: "Demo helper: fill the form with a sample message",
   demoPickerNone: "(choose a sample)",
   thanksTitle: "Thank you (demo)",
-  thanksBody: "Your message was received by the demo. In the simulation, staff would now review how it is routed. Nothing was sent anywhere.",
+  thanksBody: "Your message was received by the demo. In the simulation, staff would now review how it is routed. Nothing was sent to anyone outside the demo.",
+  thanksRef: "Your reference number:",
+  sendError: "The demo server is not reachable. Start it with: .venv/bin/python -m server.app, then open http://127.0.0.1:5000",
   thanksAgain: "Send another message",
 
   footDonate: "DONATE", footDonateBtn: "Make a Donation",
