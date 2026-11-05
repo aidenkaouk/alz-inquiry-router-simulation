@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact Us (Demo)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="demo-banner" data-i18n="demoBanner"></div>
+
+  <div class="utility">
+    <a href="#" data-i18n="chapter"></a><a href="#" data-i18n="about"></a><a href="#" data-i18n="news"></a>
+    <a href="#" data-i18n="events"></a><a href="#" data-i18n="professionals"></a><a href="#" data-i18n="enews"></a>
+    <a href="#" data-i18n="english"></a>
+  </div>
+  <header class="masthead">
+    <a class="wordmark" href="index.html"><span data-i18n="wordmark1"></span><small data-i18n="wordmark2"></small></a>
+    <div class="mast-right">
+      <div class="helpline"><a href="#" data-i18n="helplineCall"></a><strong data-i18n="helplineNumber"></strong></div>
+      <input class="search" type="search" data-i18n-placeholder="search" aria-label="Search">
+      <a class="btn-gold" href="#" data-i18n="donateNow"></a>
+      <a class="btn-gold" href="#" data-i18n="giveMonthly"></a>
+    </div>
+  </header>
+  <nav class="main">
+    <a href="#" data-i18n="navAbout"></a><a href="#" data-i18n="navHelp"></a>
+    <a href="#" data-i18n="navResearch"></a><a href="#" data-i18n="navInvolved"></a>
+  </nav>
+
+  <main class="contact">
+    <h1 data-i18n="contactTitle"></h1>
+    <p data-i18n="contactIntro"></p>
+
+    <div class="demo-picker" id="sample-box">
+      <span data-i18n="demoPicker"></span><br>
+      <select id="sample-picker" aria-label="Sample message">
+        <option value="" data-i18n="demoPickerNone"></option>
+      </select>
+    </div>
+
+    <p><span class="req">*</span><em data-i18n="required"></em></p>
+
+    <form id="contact-form">
+      <div class="row"><label for="first-name"><span class="req">*</span><span data-i18n="firstName"></span></label>
+        <input type="text" id="first-name" name="first_name" required autocomplete="off"></div>
+      <div class="row"><label for="last-name"><span class="req">*</span><span data-i18n="lastName"></span></label>
+        <input type="text" id="last-name" name="last_name" required autocomplete="off"></div>
+      <div class="row"><label for="email"><span class="req">*</span><span data-i18n="email"></span></label>
+        <input type="email" id="email" name="email" required autocomplete="off"></div>
+      <div class="row"><label for="email-type"><span class="req">*</span><span data-i18n="emailType"></span></label>
+        <select id="email-type" name="email_type" required><option>Personal</option><option>Work</option><option>Other</option></select></div>
+      <div class="checkrow"><label><input type="checkbox" name="email_opt_in" checked> <span data-i18n="optIn"></span></label></div>
+
+      <div class="row"><label for="street1" data-i18n="street1"></label>
+        <input type="text" id="street1" name="street1" autocomplete="off"></div>
+      <div class="row"><label for="street2" data-i18n="street2"></label>
+        <input type="text" id="street2" name="street2" autocomplete="off"></div>
+      <div class="row"><label for="country"><span class="req">*</span><span data-i18n="country"></span></label>
+        <select id="country" name="country" required><option>United States</option></select></div>
+      <div class="row"><label for="zip"><span class="req">*</span><span data-i18n="zip"></span></label>
+        <input class="short" type="text" id="zip" name="zip" required inputmode="numeric" pattern="[0-9]{5}" title="5-digit ZIP code" autocomplete="off"></div>
+      <div class="row"><label for="city" data-i18n="city"></label>
+        <input type="text" id="city" name="city" autocomplete="off"></div>
+      <div class="row"><label for="state" data-i18n="state"></label>
+        <select id="state" name="state"><option value=""></option></select></div>
+      <div class="row"><label for="phone-area" data-i18n="phone"></label>
+        <input class="area" type="tel" id="phone-area" name="phone_area" maxlength="3" aria-label="Area code" autocomplete="off">
+        <input class="short" type="tel" id="phone" name="phone_number" maxlength="8" aria-label="Phone number" autocomplete="off"></div>
+      <div class="row"><label for="phone-type" data-i18n="phoneType"></label>
+        <select id="phone-type" name="phone_type"><option>Mobile</option><option>Home</option><option>Work</option></select></div>
+      <p class="small wide"><span data-i18n="smsNote"></span> <a href="#" data-i18n="privacyLink"></a></p>
+
+      <div class="row"><label for="comments"><span class="req">*</span><span data-i18n="comments"></span></label>
+        <textarea id="comments" name="comments" maxlength="2500" required></textarea></div>
+      <p class="small counter"><span id="chars-left">2500</span> <span data-i18n="charsLeft"></span></p>
+
+      <p class="small wide"><span data-i18n="consent"></span> <a href="#" data-i18n="privacyPolicy"></a></p>
+      <div class="actions">
+        <a href="#" id="cancel" data-i18n="cancel"></a>
+        <button class="btn-purple" type="submit" data-i18n="submit"></button>
+      </div>
+    </form>
+
+    <div class="thanks" id="thanks" hidden>
+      <h2 data-i18n="thanksTitle"></h2>
+      <p data-i18n="thanksBody"></p>
+      <button class="btn-purple" id="again" type="button" data-i18n="thanksAgain"></button>
+    </div>
+  </main>
+
+  <div class="footband">
+    <a class="footbox" href="#"><span data-i18n="footDonate"></span><b data-i18n="footDonateBtn"></b></a>
+    <a class="footbox" href="#"><span data-i18n="footHelpline"></span><b data-i18n="helplineNumber"></b></a>
+    <a class="footbox" href="#"><span data-i18n="footArea"></span><b data-i18n="footLocal"></b></a>
+  </div>
+  <p class="footnote" data-i18n="footNote"></p>
+
+  <script src="js/strings.en.js"></script>
+  <script src="js/site.js"></script>
+  <script src="js/samples.js"></script>
+  <script src="js/contact.js"></script>
+</body>
+</html>
