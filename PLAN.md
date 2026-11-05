@@ -1,6 +1,6 @@
 # Plan: ALZ Inquiry Router demo
 
-Status: planning complete, build not started.
+Status: steps 1-6 built (data, test set, router, public form, triage console, team inbox). Step 7 (demo script and "what is not real" slide) remains.
 
 ## Source documents
 Problem statement, PRD and panel briefing (Claude Corps Basecamp). Key PRD points: the real Contact Us form has no topic field; staff sort messages by hand; the tool suggests, staff approve; crisis messages always go to the Helpline and a human; unclear messages go to TRIAGE; targets are at least 85% routing accuracy and 100% crisis catch. Mock baseline: about 120 inquiries a week, 35% reach the wrong team first, 1.8 handoffs, 3.2 business days to first response.

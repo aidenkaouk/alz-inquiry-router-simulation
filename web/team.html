@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Team Inbox (Demo)</title>
+  <link rel="stylesheet" href="css/console.css">
+</head>
+<body>
+  <div class="demo-banner">Demo, not the official alz.org. Invented data. Emails shown here are simulated and never sent.</div>
+  <header class="bar">
+    <h1>Team Inbox</h1>
+    <span class="who">
+      <a class="navlink" href="console.html">Triage console</a>
+      <label>View as
+        <select id="view-as" aria-label="View as team"></select>
+      </label>
+    </span>
+  </header>
+
+  <div class="layout">
+    <aside class="queue">
+      <h2 id="inbox-title">Inbox</h2>
+      <p class="muted" id="inbox-empty" hidden></p>
+      <ul id="inbox"></ul>
+    </aside>
+    <main id="detail" class="detail">
+      <p class="muted">Select a case from the inbox.</p>
+    </main>
+  </div>
+
+  <script src="js/team.js"></script>
+</body>
+</html>

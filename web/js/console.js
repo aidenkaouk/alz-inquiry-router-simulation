@@ -15,7 +15,7 @@ function el(tag, cls, text) {
 }
 function api(path, options) {
   return fetch(path, options).then(function (r) {
-    if (!r.ok) throw new Error(path + " failed");
+    if (!r.ok) { var err = new Error(path + " failed"); err.status = r.status; throw err; }
     return r.json();
   });
 }
@@ -95,9 +95,11 @@ function loadQueue() {
     } else if (pandaShown) {
       showPrompt();                          // a new case arrived: wake up
     }
-  }).catch(function () {
+  }).catch(function (err) {
     emptyEl.hidden = false;
-    emptyEl.textContent = "Cannot reach the demo server. Start it with: .venv/bin/python -m server.app";
+    emptyEl.textContent = err.status
+      ? "The server answered with an error (" + err.status + "). Look at the Terminal window running the server."
+      : "Cannot reach the demo server. Start it with: .venv/bin/python -m server.app";
   });
 }
 
@@ -180,6 +182,22 @@ function renderActions(c) {
     }
     done.appendChild(el("div", "muted", "Recorded only. Nothing was sent anywhere."));
     detailEl.appendChild(done);
+    // The handoff emails each team would receive. Built for display only; never sent.
+    var outboxBox = el("div");
+    detailEl.appendChild(outboxBox);
+    api("/api/cases/" + c.case_id + "/outbox").then(function (emails) {
+      outboxBox.appendChild(el("h3", "", "Simulated handoff emails (NOT SENT)"));
+      emails.forEach(function (e) {
+        var d = el("details", "saw");
+        d.appendChild(el("summary", "", e.team_id + ": to " + e.to_name + " (" + e.to_role + ")"));
+        d.appendChild(el("p", "muted", "To: " + e.to_email + "   Subject: " + e.subject));
+        d.appendChild(el("pre", "", e.body));
+        outboxBox.appendChild(d);
+      });
+      var link = el("a", "", "Open the Team Inbox to see how each team would work this case");
+      link.href = "team.html?team=" + encodeURIComponent(c.decision.teams[0]);
+      outboxBox.appendChild(link);
+    });
     return;
   }
   // Tick or untick teams, then press Approve. You are the triage team, so TRIAGE is not listed.

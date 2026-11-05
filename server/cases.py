@@ -22,7 +22,29 @@ SUBMITTER_FIELDS = [
     "country", "zip", "city", "state", "phone_area", "phone_number", "phone_type",
 ]
 
+# What each team can say about its part of a case.
+STATUSES = ["pending", "replied", "no_reply_needed"]
+
 _lock = threading.Lock()
+
+
+def is_closed(case: Dict[str, Any]) -> bool:
+    """A case is closed when every team on it has replied or needs no reply.
+    Computed, never stored, so it can't get out of sync."""
+    ts = case.get("team_status") or {}
+    return bool(ts) and all(v["status"] != "pending" for v in ts.values())
+
+
+def _upgrade(case: Dict[str, Any]) -> None:
+    """Fill in fields that cases saved by earlier versions do not have.
+
+    Cases approved before the team inbox existed have no per-team statuses. We
+    mark each of their teams Pending, because no team has acted on them yet."""
+    case.setdefault("notes", [])
+    if "team_status" not in case:
+        teams = (case.get("decision") or {}).get("teams", []) if case.get("status") == "approved" else []
+        stamp = ((case.get("audit") or [{}])[-1]).get("time") or case.get("created", "")
+        case["team_status"] = {t: {"status": "pending", "updated": stamp} for t in teams}
 
 
 class CaseStore:
@@ -31,9 +53,10 @@ class CaseStore:
 
     # -- file helpers --
     def _load(self) -> List[Dict[str, Any]]:
-        if self.path.exists():
-            return json.loads(self.path.read_text())
-        return []
+        cases = json.loads(self.path.read_text()) if self.path.exists() else []
+        for c in cases:
+            _upgrade(c)
+        return cases
 
     def _save(self, cases: List[Dict[str, Any]]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -54,6 +77,8 @@ class CaseStore:
             "route": route_result,
             "status": "needs_review",       # needs_review -> approved
             "decision": None,               # filled in when staff act
+            "team_status": {},              # team_id -> {"status", "updated"}; set on approval
+            "notes": [],                    # shared thread, each note tagged with its team
             "audit": [],
         }
         with _lock:
@@ -82,6 +107,8 @@ class CaseStore:
             changed = action == "approve" and sorted(teams) != sorted(suggested)
             case["decision"] = {"action": action, "teams": teams,
                                 "suggested_teams": suggested, "changed": changed}
+            now = time.strftime("%Y-%m-%dT%H:%M:%S")
+            case["team_status"] = {t: {"status": "pending", "updated": now} for t in teams}
             case["audit"].append({
                 "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
                 "staff": staff,
@@ -90,5 +117,27 @@ class CaseStore:
                 "suggested_teams": suggested,
                 "changed": changed,
             })
+            self._save(cases)
+            return case
+
+    def set_team_status(self, case_id: str, team: str, status: str) -> Optional[Dict[str, Any]]:
+        """Change ONE team's status. Callers must check the team is on the case."""
+        with _lock:
+            cases = self._load()
+            case = next((c for c in cases if c["case_id"] == case_id), None)
+            if case is None or team not in case.get("team_status", {}):
+                return None
+            case["team_status"][team] = {"status": status, "updated": time.strftime("%Y-%m-%dT%H:%M:%S")}
+            self._save(cases)
+            return case
+
+    def add_note(self, case_id: str, team: str, text: str) -> Optional[Dict[str, Any]]:
+        with _lock:
+            cases = self._load()
+            case = next((c for c in cases if c["case_id"] == case_id), None)
+            if case is None:
+                return None
+            case.setdefault("notes", []).append(
+                {"team": team, "text": text, "time": time.strftime("%Y-%m-%dT%H:%M:%S")})
             self._save(cases)
             return case
