@@ -3,6 +3,8 @@
 
 var queueEl = document.getElementById("queue");
 var emptyEl = document.getElementById("queue-empty");
+var followupEl = document.getElementById("followup");
+var followupHeadEl = document.getElementById("followup-head");
 var detailEl = document.getElementById("detail");
 var selected = null;
 var teamNames = {};
@@ -28,25 +30,36 @@ function chip(team) {
 }
 
 // ---- Queue ----
+// "Queue" = cases waiting for a decision. Approved cases leave the list (they stay
+// saved on the server). Follow-up cases wait in their own list so none are lost.
+function renderRow(r) {
+  var li = el("li", (r.needs_human ? "crisis " : "") + (r.status === "needs_followup" ? "followup " : "") +
+                    (r.case_id === selected ? "selected" : ""));
+  var top = el("div", "top");
+  top.appendChild(el("span", "", r.case_id + (r.needs_human ? "  CRISIS" : "")));
+  top.appendChild(el("span", "", r.status === "needs_followup" ? "Follow-up" : "Needs review"));
+  li.appendChild(top);
+  li.appendChild(el("div", "", r.name));
+  var teams = el("div");
+  r.teams.forEach(function (t) { teams.appendChild(chip(t)); });
+  li.appendChild(teams);
+  li.appendChild(el("div", "preview", r.preview));
+  li.addEventListener("click", function () { selected = r.case_id; loadQueue(); loadCase(r.case_id); });
+  return li;
+}
+
 function loadQueue() {
   api("/api/cases").then(function (rows) {
+    var open = rows.filter(function (r) { return r.status === "needs_review"; });
+    var followups = rows.filter(function (r) { return r.status === "needs_followup"; });
     queueEl.textContent = "";
-    emptyEl.hidden = rows.length > 0;
-    rows.forEach(function (r) {
-      var li = el("li", (r.needs_human ? "crisis " : "") + (r.status === "approved" ? "done " : r.status === "needs_followup" ? "followup " : "") +
-                        (r.case_id === selected ? "selected" : ""));
-      var top = el("div", "top");
-      top.appendChild(el("span", "", r.case_id + (r.needs_human ? "  CRISIS" : "")));
-      top.appendChild(el("span", "", {approved: "Approved", needs_followup: "Follow-up", needs_review: "Needs review"}[r.status]));
-      li.appendChild(top);
-      li.appendChild(el("div", "", r.name));
-      var teams = el("div");
-      r.teams.forEach(function (t) { teams.appendChild(chip(t)); });
-      li.appendChild(teams);
-      li.appendChild(el("div", "preview", r.preview));
-      li.addEventListener("click", function () { selected = r.case_id; loadQueue(); loadCase(r.case_id); });
-      queueEl.appendChild(li);
-    });
+    followupEl.textContent = "";
+    open.forEach(function (r) { queueEl.appendChild(renderRow(r)); });
+    followups.forEach(function (r) { followupEl.appendChild(renderRow(r)); });
+    emptyEl.hidden = open.length > 0;
+    emptyEl.textContent = rows.length ? "Queue is clear. Nice work." : "No cases yet. Submit one from the Contact Us form.";
+    followupHeadEl.hidden = followups.length === 0;
+    followupHeadEl.textContent = "Follow-up (" + followups.length + ")";
   }).catch(function () {
     emptyEl.hidden = false;
     emptyEl.textContent = "Cannot reach the demo server. Start it with: .venv/bin/python -m server.app";
