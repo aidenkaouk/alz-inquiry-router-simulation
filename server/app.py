@@ -1,7 +1,7 @@
 """Local demo server: serves the web pages, receives form submissions and
 feeds the staff console.
 
-Run:  .venv/bin/python -m server.app     then open http://127.0.0.1:5000
+Run:  .venv/bin/python -m server.app     then open http://127.0.0.1:5050
 
 PRIVACY: the router only ever receives the case ID and the Comments text
 (see server/payload.py). Name, email, phone and address stay in the case record.
@@ -28,6 +28,7 @@ STAFF = "Beatrice Lowell (Constituent Triage, demo)"
 def create_app(store=None, mode=None):
     """mode: "auto" (live Claude, falling back to saved answers), "live" or "cache"."""
     app = Flask(__name__, static_folder=str(ROOT / "web"), static_url_path="")
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0   # browsers always fetch the latest page files
     store = store or CaseStore()
     mode = mode or os.environ.get("ROUTER_MODE", "auto")
     valid_teams = {t["team_id"] for t in router.load_teams()} - {"TRIAGE"}
@@ -109,4 +110,6 @@ def create_app(store=None, mode=None):
 
 
 if __name__ == "__main__":
-    create_app().run(host="127.0.0.1", port=5000, debug=False)
+    # use_reloader restarts the server when code changes, so it never runs stale code.
+    # debug stays off (the debug mode allows running code from the browser).
+    create_app().run(host="127.0.0.1", port=5050, debug=False, use_reloader=True)

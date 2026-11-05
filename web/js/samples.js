@@ -10,7 +10,7 @@ window.SAMPLES = [
   { id: "M20", label: "Walk donation receipt plus team captain (WALK + DON)",
     submitter: { first_name: "Pat", last_name: "Sullivan", email: "psullivan@example.org", zip: "98101" },
     comments: "I donated on my Walk team page but never received a receipt, and I would like to captain a team next year." },
-  { id: "M25", label: "Too many topics (TRIAGE)",
+  { id: "M25", label: "Too many topics (needs staff sorting)",
     submitter: { first_name: "Dana", last_name: "Whitlock", email: "dana.whitlock@example.org", zip: "60614" },
     comments: "I want to make a monthly gift, volunteer at the Walk, apply for a job, and my company wants to sponsor. A reporter friend also wants to talk to you." },
   { id: "M28", label: "Prompt-injection attempt (DON)",

@@ -48,3 +48,10 @@ pre { white-space: pre-wrap; background: var(--grey); padding: 10px; font-size: 
 @media (max-width: 760px) { .layout { flex-direction: column; } .queue { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--line); } }
 
 .bar .who { font-size: 13px; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.panda { text-align: center; padding: 60px 16px; }
+.panda h2 { color: var(--purple); margin: 10px 0 4px; }
+.zzz { animation: drift 3s ease-in-out infinite; }
+@keyframes drift { 0%, 100% { opacity: 0.35; transform: translateY(4px); } 50% { opacity: 1; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .zzz { animation: none; } }

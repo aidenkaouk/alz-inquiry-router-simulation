@@ -167,3 +167,17 @@ def test_bad_action_and_unknown_case(client):
     assert client.post(f"/api/cases/{case_id}/decision", json={"action": "reroute"}).status_code == 400
     assert client.get("/api/cases/CASE-9999").status_code == 404
     assert client.post("/api/cases/CASE-9999/decision", json={"action": "approve"}).status_code == 404
+
+
+def test_unsorted_case_stays_in_queue_until_staff_pick_teams(client):
+    case_id = submit(client, "M26")           # vague: router could not decide
+    # Approving with no teams is refused, and the case is untouched.
+    assert client.post(f"/api/cases/{case_id}/decision", json={"action": "approve"}).status_code == 400
+    assert client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": []}).status_code == 400
+    row = next(r for r in client.get("/api/cases").get_json() if r["case_id"] == case_id)
+    assert row["status"] == "needs_review"
+    assert client.get(f"/api/cases/{case_id}").get_json()["audit"] == []
+    # It only leaves the queue once real teams are chosen.
+    client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["CHAP"]})
+    row = next(r for r in client.get("/api/cases").get_json() if r["case_id"] == case_id)
+    assert row["status"] == "approved"
