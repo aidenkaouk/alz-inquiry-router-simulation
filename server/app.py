@@ -27,6 +27,21 @@ STAFF = "Beatrice Lowell (Constituent Triage, demo)"
 MAX_NOTE = 500
 
 
+def redaction_fields(form):
+    """Turn the form's boxes into the names the redactor understands.
+
+    redact() looks for `address` and `phone`; the form has separate street, city and
+    phone boxes. Without this step the sender's own address and phone would NOT be
+    matched against the message text. Used only for redaction; never sent to Claude."""
+    get = lambda k: str(form.get(k, "") or "").strip()
+    return {
+        "first_name": get("first_name"), "last_name": get("last_name"),
+        "email": get("email"), "zip": get("zip"),
+        "address": ", ".join(p for p in (get("street1"), get("street2"), get("city")) if p),
+        "phone": (get("phone_area") + get("phone_number")),
+    }
+
+
 def create_app(store=None, mode=None):
     """mode: "auto" (live Claude, falling back to saved answers), "live" or "cache"."""
     app = Flask(__name__, static_folder=str(ROOT / "web"), static_url_path="")
@@ -60,9 +75,7 @@ def create_app(store=None, mode=None):
         # Only the case ID and the Comments go to the router. The submitter
         # fields are passed so redaction can remove them from the text; they
         # are never sent to Claude.
-        submitter = {k: str(form.get(k, "")) for k in
-                     ["first_name", "last_name", "email", "street1", "street2",
-                      "city", "zip", "phone_area", "phone_number"]}
+        submitter = redaction_fields(form)
         result = router.route(case_id, comments, submitter, mode=mode)
         store.create(form, result.to_dict(), case_id)
         return jsonify({"case_id": case_id}), 201   # no routing info to the public

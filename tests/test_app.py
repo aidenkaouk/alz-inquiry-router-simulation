@@ -181,3 +181,19 @@ def test_unsorted_case_stays_in_queue_until_staff_pick_teams(client):
     client.post(f"/api/cases/{case_id}/decision", json={"action": "approve", "teams": ["CHAP"]})
     row = next(r for r in client.get("/api/cases").get_json() if r["case_id"] == case_id)
     assert row["status"] == "approved"
+
+
+# --- The sender's own form fields must be used for redaction ----------------------
+
+def test_own_address_and_phone_fields_are_redacted_from_the_message(client):
+    # Unusual wording that the general patterns would NOT catch, so only a match
+    # against the sender's own form fields can remove it.
+    body = {"first_name": "Ada", "last_name": "Quill", "email": "ada@example.org", "zip": "62704",
+            "street1": "Rural Route Seven", "city": "Pine Hollow",
+            "phone_area": "217", "phone_number": "5550163",
+            "comments": "I live at Rural Route Seven, Pine Hollow and my number is 2175550163. Is there a support group near me?"}
+    case_id = client.post("/api/inquiries", json=body).get_json()["case_id"]
+    saw = client.get(f"/api/cases/{case_id}").get_json()["route"]["what_claude_saw"]
+    for secret in ["Rural Route Seven", "Pine Hollow", "2175550163"]:
+        assert secret not in saw
+    assert "[ADDRESS]" in saw and "[PHONE]" in saw
